@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "material-ui-vite-tailwind-ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "7.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,21 +10,27 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
+    "@mui/x-charts": "^8.22.0",
+    "@mui/x-data-grid": "^8.22.0",
+    "@mui/x-date-pickers": "^8.22.0",
+    "@mui/x-tree-view": "^8.22.0",
+    "@react-spring/web": "^10.0.3",
+    "@tailwindcss/vite": "latest",
+    "dayjs": "^1.11.19",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "latest"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
-  }
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "proxy": "http://localhost:8080"
 }
