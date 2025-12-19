@@ -1,0 +1,25 @@
+---
+import "flowbite";
+import Layout from "../layouts/Layout.astro";
+import SidebarDevices from "../components/SidebarDevices.tsx";
+import MainPanel from "../components/MainPanel.astro";
+import type { Device } from "../api/models/device";
+
+function handleDeviceSelect(device: Device) {
+  console.log("Selected device:", device);
+  // Update main panel here
+}
+
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+---
+
+<Layout>
+  <!-- <Welcome /> -->
+  <div class="min-h-screen bg-gray-900 p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-6">
+      <SidebarDevices client:load apiUrl="http://localhost:8080/api/mdns/discovery" onDeviceSelect={handleDeviceSelect} />
+      <MainPanel />
+    </div>
+  </div>
+</Layout>
