@@ -1,8 +1,9 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import SidebarDevices from './SidebarDevices';
-import type { Device as BackendDevice } from '../api/models/device';
+import type { Device as BackendDevice, Device } from '../api/models/device';
+import { wsService } from '../services/websocket';
 
-interface Device {
+interface GridDevice {
   id: string;
   name: string;
   icon: string;
@@ -15,11 +16,13 @@ interface Device {
 }
 
 interface GridProps {
-  devices: Device[];
-  selectedDevice?: Device | null;
+  devices: GridDevice[];
+  selectedDevice?: GridDevice | null;
   onDeviceSelect?: (device: Device) => void;
   onAddDevice?: (device: BackendDevice) => void;
   onDeviceDelete?: (deviceId: string) => void;
+  simulationRunning?: boolean;
+  localSki?: string;
 }
 
 // Helper to parse position object for SVG calculations
@@ -81,20 +84,13 @@ const getEdgePoint = (
   return { x: edgeX, y: edgeY };
 };
 
-export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDevice, onDeviceDelete }: GridProps) {
+export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDevice, onDeviceDelete, simulationRunning = false, localSki = '' }: GridProps) {
   const [isScanning, setIsScanning] = useState(true);
   const [showCemPopover, setShowCemPopover] = useState(false);
-  const [localSki, setLocalSki] = useState<string>('');
 
-  // Fetch local SKI on component mount
-  useState(() => {
-    fetch('http://localhost:8080/api/ski/local')
-      .then(res => res.json())
-      .then(data => setLocalSki(data.ski))
-      .catch(err => console.error('Failed to fetch local SKI:', err));
-  });
+  // Use the localSki prop instead of fetching it
 
-  const handleAddDevice = (discoveredDevice: DiscoveredDevice) => {
+  const handleAddDevice = (discoveredDevice: BackendDevice) => {
     onAddDevice?.(discoveredDevice);
   };
 
@@ -104,14 +100,33 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
     setTimeout(() => setIsScanning(false), 2000);
   };
 
-  const handleDeviceClick = (device: Device) => {
+  const handleDeviceClick = (device: GridDevice) => {
     onDeviceSelect?.(device);
   };
+
+  // Start simulation via WebSocket
+  useEffect(() => {
+    /* let devicesSimRequested: string[] = [];
+
+    if (simulationRunning && devices.length > 0) {
+      const simDevicesSkis = devices.map(device => device.id).filter(x => !devicesSimRequested.includes(x));
+
+      if (simDevicesSkis.length === 0) {
+        console.log('All devices are already in simulation.');
+        return;
+      }
+
+      wsService.send('start_simulation', { devices: simDevicesSkis });
+      console.log('Simulation request sent for devices:', simDevicesSkis);
+      
+      devicesSimRequested = [...devicesSimRequested, ...simDevicesSkis];
+    } */
+  }, [simulationRunning, devices]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div className="lg:col-span-3">
-        <div className="glass-panel rounded-3xl relative overflow-hidden grid-container border border-white/10 min-h-[600px]">
+        <div className="glass-panel rounded-3xl relative overflow-hidden grid-container border border-white/10 min-h-[450px]">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
             <div 
               className="size-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_50px_rgba(19,146,236,0.3)] relative cursor-pointer hover:scale-105 transition-transform group/cem"
@@ -239,7 +254,6 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
         </div>
       </div>
       <SidebarDevices 
-        apiUrl="http://localhost:8080/api/mdns/discovery"
         onAddDevice={onAddDevice}
         onDeviceDelete={onDeviceDelete}
         addedDeviceIds={devices.map(d => d.id)}

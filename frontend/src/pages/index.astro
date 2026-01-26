@@ -1,69 +1,9 @@
 ---
 import "flowbite";
 import Layout from "../layouts/Layout.astro";
-import type { Device } from "../api/models/device";
-import GridContainer from "../components/GridContainer.tsx";
-import Footer from "../components/Footer.astro";
-
-function handleDeviceSelect(device: Device) {
-  console.log("Selected device:", device);
-  // Update main panel here
-}
-
-let selectedDevice: Device | null = null;
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
-
-/* <Layout>
-  <!-- <Welcome /> -->
-  <div class="min-h-screen bg-gray-900 p-6">
-    <div class="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-6">
-      <SidebarDevices client:load apiUrl="http://localhost:8080/api/mdns/discovery" onDeviceSelect={handleDeviceSelect} />
-      <MainPanel />
-    </div>
-  </div>
-</Layout> */
+import AppContainer from "../components/AppContainer.tsx";
 ---
 
 <Layout>
-  <html class="dark" lang="en">
-      <main class="max-w-[1440px] mx-auto px-6 py-8">
-        <div
-          class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8"
-        >
-          <div class="space-y-1">
-            <h1 class="text-white text-4xl font-black tracking-tight">
-              Grid Operations
-            </h1>
-            <p class="text-slate-400 text-base">
-              MPC-driven energy management &amp; real-time node discovery
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div
-              class="glass-card px-4 py-2 rounded-lg flex items-center gap-3"
-            >
-              <div class="flex items-center gap-1.5">
-                <span class="size-2 rounded-full bg-green-500"></span>
-                <span class="text-[10px] font-bold text-slate-300 uppercase"
-                  >MPC Optimized</span
-                >
-              </div>
-              <div class="w-px h-4 bg-white/10"></div>
-              <div class="flex items-center gap-1.5">
-                <span class="size-2 rounded-full bg-primary animate-pulse"
-                ></span>
-                <span class="text-[10px] font-bold text-slate-300 uppercase"
-                  >Scanning SHIP/SPINE</span
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-        <GridContainer client:load />
-      </main>
-      <Footer />
-    </body>
-  </html>
+  <AppContainer client:load />
 </Layout>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "preact/hooks";
 import type { Device } from "../api/models/device";
+import { wsService } from "../services/websocket";
 
 interface SidebarDevicesProps {
-  apiUrl: string; // backend endpoint
   onDeviceSelect?: (device: Device) => void;
   onAddDevice?: (device: Device) => void;
   onDeviceDelete?: (deviceId: string) => void;
@@ -10,7 +10,6 @@ interface SidebarDevicesProps {
 }
 
 export default function SidebarDevices({
-  apiUrl,
   onDeviceSelect,
   onAddDevice,
   onDeviceDelete,
@@ -18,6 +17,7 @@ export default function SidebarDevices({
 }: SidebarDevicesProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedSki, setSelectedSki] = useState<string>("");
+  const [newDeviceCount, setNewDeviceCount] = useState<number>(0);
 
   // Map device type to Material Symbols icon
   const getDeviceIcon = (type: string): string => {
@@ -38,30 +38,26 @@ export default function SidebarDevices({
     return typeMap[normalizedType] || 'device_hub'; // default icon
   };
 
-  // Poll every 5 seconds
+  // Setup WebSocket listeners for automatic updates
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchDevices() {
-      try {
-        const res = await fetch(apiUrl);
-        const data: Device[] = await res.json();
-        if (isMounted) setDevices(data);
-      } catch (err) {
-        console.error("Failed to fetch devices:", err);
+    // Listen for discovery updates
+    const handler = (type: string, data: any) => {
+      if (type === 'mdns_discovery') {
+        setDevices(data);
+      } else if (type === 'new_devices_discovered') {
+        console.log(`🎉 ${data.newCount} new device(s) discovered!`, data.newDevices);
+        setNewDeviceCount(data.newCount);
+        // Clear the notification after 3 seconds
+        setTimeout(() => setNewDeviceCount(0), 3000);
       }
-    }
+    };
 
-    fetchDevices();
-    const interval = setInterval(fetchDevices, 5000);
-
-    console.log("Devices fetched:", devices);
+    wsService.addHandler(handler);
 
     return () => {
-      isMounted = false;
-      clearInterval(interval);
+      wsService.removeHandler(handler);
     };
-  }, [apiUrl]);
+  }, []);
 
   const handleClick = (device: Device) => {
     setSelectedSki(device.ski);
@@ -84,7 +80,7 @@ export default function SidebarDevices({
   return (
     <aside>
       <div className="lg:col-span-1">
-        <div className="glass-panel h-full rounded-3xl p-6 border border-white/10 flex flex-col">
+        <div className="glass-panel min-h-[450px] rounded-3xl p-6 border border-white/10 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-white font-black text-sm uppercase tracking-wider">
@@ -94,11 +90,18 @@ export default function SidebarDevices({
                 SHIP/SPINE Search
               </p>
             </div>
-            <span className="size-6 bg-primary/20 rounded flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-sm animate-spin">
-                sync
+            <div className="flex items-center gap-2">
+              {newDeviceCount > 0 && (
+                <div className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+                  +{newDeviceCount} new
+                </div>
+              )}
+              <span className="size-6 bg-primary/20 rounded flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-sm animate-spin">
+                  sync
+                </span>
               </span>
-            </span>
+            </div>
           </div>
           <div className="space-y-3 flex-grow overflow-y-auto pr-1">
             {devices.map((device) => (

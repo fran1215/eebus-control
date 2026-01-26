@@ -1,7 +1,8 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import Grid from './Grid.tsx';
 import SelectedDevice from './SelectedDevice.tsx';
 import type { Device as BackendDevice } from '../api/models/device';
+import { wsService } from '../services/websocket';
 
 interface GridDevice {
   id: string;
@@ -33,9 +34,38 @@ const ICON_COLORS = [
   'text-yellow-500',
 ];
 
-export default function GridContainer() {
+interface GridContainerProps {
+  simulationRunning?: boolean;
+  localSki?: string;
+}
+
+export default function GridContainer({ simulationRunning = false, localSki = '' }: GridContainerProps) {
   const [selectedDevice, setSelectedDevice] = useState<GridDevice | null>(null);
   const [devices, setDevices] = useState<GridDevice[]>([]);
+
+  // Listen for MPC updates from WebSocket
+  useEffect(() => {
+    const unsubscribe = wsService.onMessage('mpc_update', (data: any) => {
+      const { ski, power, energy, current } = data;
+      
+      // Update the device with matching SKI
+      setDevices(prevDevices => 
+        prevDevices.map(device => 
+          device.id === ski 
+            ? { 
+                ...device, 
+                power: `${(power / 1000).toFixed(2)} kW`,
+                flow: `${current.toFixed(2)} A`
+              }
+            : device
+        )
+      );
+      
+      console.log(`MPC Update: ${ski} - ${power}W, ${energy}Wh, ${current}A`);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const generateRandomPosition = (): { x: number; y: number } => {
     const positions = [
@@ -146,6 +176,8 @@ export default function GridContainer() {
         onDeviceSelect={setSelectedDevice}
         onAddDevice={handleAddDevice}
         onDeviceDelete={handleDeleteDevice}
+        simulationRunning={simulationRunning}
+        localSki={localSki}
       />
       {selectedDevice && <SelectedDevice device={selectedDevice} />}
     </>

@@ -1,10 +1,11 @@
-import { useState } from 'preact/hooks';
+interface NavbarProps {
+  simulationRunning?: boolean;
+  onToggleSimulation?: () => void;
+}
 
-export default function Navbar() {
-  const [simulationRunning, setSimulationRunning] = useState(false);
-
+export default function Navbar({ simulationRunning = false, onToggleSimulation }: NavbarProps) {
   const toggleSimulation = () => {
-    setSimulationRunning(!simulationRunning);
+    onToggleSimulation?.();
   };
 
   return (
@@ -26,10 +27,10 @@ export default function Navbar() {
           <div className="flex items-center gap-2 mr-2">
             <button
               onClick={toggleSimulation}
-              className={`flex items-center justify-center gap-2 px-4 py-2 w-48 ${
+              className={`flex items-center justify-center gap-2 px-4 py-2 w-48 cursor-pointer ${
                 simulationRunning
-                  ? 'bg-simulation-stop hover:bg-red-600 shadow-red-500/20'
-                  : 'bg-simulation-start hover:bg-green-600 shadow-green-500/20'
+                  ? 'bg-simulation-stop hover:bg-red-600 hover:shadow-red-500/20'
+                  : 'bg-simulation-start hover:bg-green-600 hover:shadow-green-500/20'
               } text-white rounded-lg text-xs font-bold transition-all shadow-lg`}
             >
               <span className="material-symbols-outlined text-sm">
@@ -39,9 +40,9 @@ export default function Navbar() {
             </button>
           </div>
           <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-            <div className="size-10 rounded-full bg-primary/30 border border-primary/50 overflow-hidden flex items-center justify-center">
+            <div className="size-10 rounded-full bg-primary/30 border border-primary/50 overflow-hidden flex items-center justify-center cursor-pointer">
               <span className="material-symbols-outlined text-white">
-                settings_input_component
+                settings
               </span>
             </div>
           </div>

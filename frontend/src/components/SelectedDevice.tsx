@@ -7,6 +7,10 @@ interface Device {
   borderColor: string;
   iconColor: string;
   position: string;
+  energy?: string;
+  current?: string;
+  voltage?: string;
+  frequency?: string;
 }
 
 interface SelectedDeviceProps {
@@ -70,7 +74,9 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
               Energy
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl digital-readout font-bold text-white">84.5</span>
+              <span className="text-4xl digital-readout font-bold text-white">
+                {device.energy || '0.00'}
+              </span>
               <span className="text-blue-400 font-bold text-xs">kWh</span>
             </div>
             <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -82,7 +88,9 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
               Current
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl digital-readout font-bold text-white">9.12</span>
+              <span className="text-4xl digital-readout font-bold text-white">
+                {device.current || '0.00'}
+                </span>
               <span className="text-amber-400 font-bold text-xs">A</span>
             </div>
             <div className="flex justify-between mt-4 text-[9px] font-bold uppercase text-slate-600">
@@ -94,7 +102,9 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
               Voltage
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl digital-readout font-bold text-white">230.1</span>
+              <span className="text-4xl digital-readout font-bold text-white">
+                {device.voltage || '0.00'}
+                </span>
               <span className="text-purple-400 font-bold text-xs">V</span>
             </div>
             <div className="mt-4 flex items-center gap-1.5">
@@ -107,7 +117,9 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
               Frequency
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl digital-readout font-bold text-white">50.00</span>
+              <span className="text-4xl digital-readout font-bold text-white">
+                {device.frequency || '0.00'}
+                </span>
               <span className="text-teal-400 font-bold text-xs">Hz</span>
             </div>
             <div className="mt-4 flex items-center gap-2">
