@@ -104,25 +104,6 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
     onDeviceSelect?.(device);
   };
 
-  // Start simulation via WebSocket
-  useEffect(() => {
-    /* let devicesSimRequested: string[] = [];
-
-    if (simulationRunning && devices.length > 0) {
-      const simDevicesSkis = devices.map(device => device.id).filter(x => !devicesSimRequested.includes(x));
-
-      if (simDevicesSkis.length === 0) {
-        console.log('All devices are already in simulation.');
-        return;
-      }
-
-      wsService.send('start_simulation', { devices: simDevicesSkis });
-      console.log('Simulation request sent for devices:', simDevicesSkis);
-      
-      devicesSimRequested = [...devicesSimRequested, ...simDevicesSkis];
-    } */
-  }, [simulationRunning, devices]);
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div className="lg:col-span-3">
@@ -244,7 +225,7 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
                       {device.power ? 'Power' : 'Flow'}
                     </span>
                     <span className="text-white font-mono">
-                      {device.power || device.flow}
+                      {simulationRunning ? (device.power || device.flow) : '0.00'}
                     </span>
                   </div>
                 </div>

@@ -1,13 +1,26 @@
-import { useState, useEffect } from 'preact/hooks';
-import Navbar from './Navbar.tsx';
-import GridContainer from './GridContainer.tsx';
-import Footer from './Footer.tsx';
-import { wsService } from '../services/websocket';
+import { useState, useEffect } from "preact/hooks";
+import Navbar from "./Navbar.tsx";
+import GridContainer from "./GridContainer.tsx";
+import Footer from "./Footer.tsx";
+import { wsService } from "../services/websocket";
 
 export default function AppContainer() {
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [localSki, setLocalSki] = useState<string>('');
+  const [localSki, setLocalSki] = useState<string>("");
+  const [deviceSkis, setDeviceSkis] = useState<string[]>([]);
+
+  const handleSimulationToggle = () => {
+    const newState = !simulationRunning;
+    if (newState) {
+      // Start simulation with current devices
+      wsService.send("start_simulation", { devices: deviceSkis });
+    } else {
+      // Stop simulation
+      wsService.send("stop_simulation", {});
+    }
+    setSimulationRunning(newState);
+  };
 
   useEffect(() => {
     // Connect to WebSocket on component mount
@@ -15,10 +28,10 @@ export default function AppContainer() {
 
     // Listen for connection status
     const handler = (type: string, data: any) => {
-      if (type === 'connected') {
+      if (type === "connected") {
         setConnected(true);
-        setLocalSki(data.ski || '');
-        console.log('Connected to WebSocket server:', data);
+        setLocalSki(data.ski || "");
+        console.log("Connected to WebSocket server:", data);
       }
     };
 
@@ -33,9 +46,9 @@ export default function AppContainer() {
 
   return (
     <>
-      <Navbar 
+      <Navbar
         simulationRunning={simulationRunning}
-        onToggleSimulation={() => setSimulationRunning(!simulationRunning)}
+        onToggleSimulation={handleSimulationToggle}
       />
       {!connected && (
         <div className="max-w-[1440px] mx-auto px-6 py-4">
@@ -43,12 +56,18 @@ export default function AppContainer() {
             <span className="material-symbols-outlined text-yellow-500 animate-pulse">
               sync
             </span>
-            <p className="text-white text-sm">Connecting to WebSocket server...</p>
+            <p className="text-white text-sm">
+              Connecting to WebSocket server...
+            </p>
           </div>
         </div>
       )}
       <main className="max-w-[1440px] mx-auto px-6 py-6">
-        <GridContainer simulationRunning={simulationRunning} localSki={localSki} />
+        <GridContainer
+          simulationRunning={simulationRunning}
+          localSki={localSki}
+          onDevicesChange={setDeviceSkis}
+        />
       </main>
       <Footer />
     </>

@@ -37,16 +37,25 @@ const ICON_COLORS = [
 interface GridContainerProps {
   simulationRunning?: boolean;
   localSki?: string;
+  onDevicesChange?: (skis: string[]) => void;
 }
 
-export default function GridContainer({ simulationRunning = false, localSki = '' }: GridContainerProps) {
+export default function GridContainer({ simulationRunning = false, localSki = '', onDevicesChange }: GridContainerProps) {
   const [selectedDevice, setSelectedDevice] = useState<GridDevice | null>(null);
   const [devices, setDevices] = useState<GridDevice[]>([]);
+
+  // Notify parent when devices change
+  useEffect(() => {
+    if (onDevicesChange) {
+      const skis = devices.map(d => d.id);
+      onDevicesChange(skis);
+    }
+  }, [devices, onDevicesChange]);
 
   // Listen for MPC updates from WebSocket
   useEffect(() => {
     const unsubscribe = wsService.onMessage('mpc_update', (data: any) => {
-      const { ski, power, energy, current } = data;
+      const { ski, power, energy, current, voltage, frequency } = data;
       
       // Update the device with matching SKI
       setDevices(prevDevices => 
@@ -55,13 +64,32 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
             ? { 
                 ...device, 
                 power: `${(power / 1000).toFixed(2)} kW`,
-                flow: `${current.toFixed(2)} A`
+                flow: `${current.toFixed(2)} A`,
+                energy: `${(energy / 1000).toFixed(2)}`,
+                current: `${current.toFixed(2)}`,
+                voltage: `${voltage.toFixed(2)} V`,
+                frequency: `${frequency.toFixed(2)} Hz`
               }
             : device
         )
       );
+
+      // Update selected device if it matches
+      setSelectedDevice(prevSelected => 
+        prevSelected && prevSelected.id === ski
+          ? {
+              ...prevSelected,
+              power: `${(power / 1000).toFixed(2)} kW`,
+              flow: `${current.toFixed(2)} A`,
+              energy: `${(energy / 1000).toFixed(2)}`,
+              current: `${current.toFixed(2)}`,
+              voltage: `${voltage.toFixed(2)} V`, 
+              frequency: `${data.frequency.toFixed(2)} Hz`
+            }
+          : prevSelected
+      );
       
-      console.log(`MPC Update: ${ski} - ${power}W, ${energy}Wh, ${current}A`);
+      console.log(`MPC Update: ${ski} - ${power}W, ${energy}Wh, ${voltage}V, ${current}A, ${frequency}Hz`);
     });
 
     return unsubscribe;
@@ -126,6 +154,8 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
     if (selectedDevice?.id === deviceId) {
       setSelectedDevice(null);
     }
+    // Send remove_device message to backend
+    wsService.send('remove_device', { ski: deviceId });
     console.log('Device removed from grid:', deviceId);
   };
 
@@ -166,6 +196,8 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
 
     setDevices([...devices, newDevice]);
     console.log('Device added to grid:', newDevice);
+
+    wsService.send('add_device', { ski: backendDevice.ski});
   };
 
   return (
@@ -179,7 +211,7 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
         simulationRunning={simulationRunning}
         localSki={localSki}
       />
-      {selectedDevice && <SelectedDevice device={selectedDevice} />}
+      {selectedDevice && <SelectedDevice device={selectedDevice} simulationRunning={simulationRunning} />}
     </>
   );
 }

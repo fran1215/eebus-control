@@ -15,9 +15,10 @@ interface Device {
 
 interface SelectedDeviceProps {
   device: Device;
+  simulationRunning?: boolean;
 }
 
-export default function SelectedDevice({ device }: SelectedDeviceProps) {
+export default function SelectedDevice({ device, simulationRunning }: SelectedDeviceProps) {
   return (
     <div className="mt-8">
       <div className="glass-panel rounded-3xl p-8 border border-white/10 relative overflow-hidden">
@@ -58,7 +59,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl digital-readout font-bold text-white">
-                {device.power || device.flow || '0.00'}
+                {simulationRunning ? (device.power || device.flow || '0.00') : '0.00'}
               </span>
               <span className="text-primary font-bold text-xs">kW</span>
             </div>
@@ -66,7 +67,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
               <span className="material-symbols-outlined text-xs text-green-500">
                 {device.flow ? 'arrow_downward' : 'arrow_upward'}
               </span>
-              <span>{device.flow ? 'Charging' : 'Active'}</span>
+              <span>{simulationRunning ? (device.flow ? 'Charging' : 'Active') : 'Inactive'}</span>
             </div>
           </div>
           <div className="glass-card p-6 rounded-2xl border-t-2 border-t-blue-400/50">
@@ -75,7 +76,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl digital-readout font-bold text-white">
-                {device.energy || '0.00'}
+                {simulationRunning ? (device.energy || '0.00') : '0.00'}
               </span>
               <span className="text-blue-400 font-bold text-xs">kWh</span>
             </div>
@@ -89,7 +90,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl digital-readout font-bold text-white">
-                {device.current || '0.00'}
+                {simulationRunning ? (device.current || '0.00') : '0.00'}
                 </span>
               <span className="text-amber-400 font-bold text-xs">A</span>
             </div>
@@ -103,7 +104,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl digital-readout font-bold text-white">
-                {device.voltage || '0.00'}
+                {simulationRunning ? (device.voltage || '0.00') : '0.00'}
                 </span>
               <span className="text-purple-400 font-bold text-xs">V</span>
             </div>
@@ -118,7 +119,7 @@ export default function SelectedDevice({ device }: SelectedDeviceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl digital-readout font-bold text-white">
-                {device.frequency || '0.00'}
+                {simulationRunning ? (device.frequency || '0.00') : '0.00'}
                 </span>
               <span className="text-teal-400 font-bold text-xs">Hz</span>
             </div>
