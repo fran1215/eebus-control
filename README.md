@@ -1,4 +1,4 @@
-# EEBUS-Client 🔌🔋
+# EEBUS-Control 🔌🔋
 
 ![EEBUS-Client Web View](assets/img/eebus_client_ss.png)
 
