@@ -1,5 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
-import type { Device } from "../api/models/device";
+import { ConnectionState, type Device } from "../api/models/device";
 import { wsService } from "../services/websocket";
 
 interface SidebarDevicesProps {
@@ -40,12 +40,16 @@ export default function SidebarDevices({
 
   // Setup WebSocket listeners for automatic updates
   useEffect(() => {
-    // Listen for discovery updates
+    // Listen for discovery and connection state updates
     const handler = (type: string, data: any) => {
       if (type === 'mdns_discovery') {
         setDevices(data);
+      } else if (type === 'connection_state_update') {
+        setDevices(prev => prev.map(d =>
+          d.ski === data.ski ? { ...d, connectionState: data.connectionState } : d
+        ));
       } else if (type === 'new_devices_discovered') {
-        console.log(`🎉 ${data.newCount} new device(s) discovered!`, data.newDevices);
+        console.log(`${data.newCount} new device(s) discovered!`, data.newDevices);
         setNewDeviceCount(data.newCount);
         // Clear the notification after 3 seconds
         setTimeout(() => setNewDeviceCount(0), 3000);
@@ -65,6 +69,7 @@ export default function SidebarDevices({
   };
 
   const handleAddDevice = (device: Device) => {
+    if (device.connectionState !== ConnectionState.Completed) return;
     if (onAddDevice) {
       onAddDevice(device);
     }
@@ -118,30 +123,43 @@ export default function SidebarDevices({
                       {device.generalInfo.deviceName || device.shipInfo.instanceName || "Unnamed Device"}
                     </h5>
                   </div>
-                  <button
-                    onClick={(e) => 
-                      addedDeviceIds.includes(device.ski)
-                        ? handleDeleteDevice(e, device.ski, device.generalInfo.deviceName || device.shipInfo.instanceName || "Unnamed Device")
-                        : handleAddDevice(device)
-                    }
-                    className={`size-6 rounded-full flex items-center justify-center transition-all relative group/btn ${
-                      addedDeviceIds.includes(device.ski)
-                        ? 'bg-green-600 hover:bg-red-600 cursor-pointer'
-                        : 'bg-primary hover:scale-110 cursor-pointer'
-                    }`}
-                    title={addedDeviceIds.includes(device.ski) ? 'Remove from grid' : 'Add to grid'}
-                  >
-                    <span className={`material-symbols-outlined text-white text-xs absolute transition-opacity ${
-                      addedDeviceIds.includes(device.ski) ? 'opacity-100 group-hover/btn:opacity-0' : 'opacity-100'
-                    }`}>
-                      {addedDeviceIds.includes(device.ski) ? 'check' : 'add'}
-                    </span>
-                    {addedDeviceIds.includes(device.ski) && (
-                      <span className="material-symbols-outlined text-white text-xs absolute opacity-0 group-hover/btn:opacity-100 transition-opacity">
-                        close
+                  <div className="flex items-center gap-1.5">
+                    {device.connectionState !== ConnectionState.Completed && (
+                      <span
+                        className="material-symbols-outlined text-amber-400 text-sm"
+                        title={`Not connected (state: ${device.connectionState ?? 'unknown'})`}
+                      >
+                        warning
                       </span>
                     )}
-                  </button>
+                    <button
+                      onClick={(e) =>
+                        addedDeviceIds.includes(device.ski)
+                          ? handleDeleteDevice(e, device.ski, device.generalInfo.deviceName || device.shipInfo.instanceName || "Unnamed Device")
+                          : handleAddDevice(device)
+                      }
+                      disabled={!addedDeviceIds.includes(device.ski) && device.connectionState !== ConnectionState.Completed}
+                      className={`size-6 rounded-full flex items-center justify-center transition-all relative group/btn ${
+                        addedDeviceIds.includes(device.ski)
+                          ? 'bg-green-600 hover:bg-red-600 cursor-pointer'
+                          : device.connectionState === ConnectionState.Completed
+                            ? 'bg-primary hover:scale-110 cursor-pointer'
+                            : 'bg-slate-600 opacity-50 cursor-not-allowed'
+                      }`}
+                      title={addedDeviceIds.includes(device.ski) ? 'Remove from grid' : device.connectionState !== ConnectionState.Completed ? 'Device not connected' : 'Add to grid'}
+                    >
+                      <span className={`material-symbols-outlined text-white text-xs absolute transition-opacity ${
+                        addedDeviceIds.includes(device.ski) ? 'opacity-100 group-hover/btn:opacity-0' : 'opacity-100'
+                      }`}>
+                        {addedDeviceIds.includes(device.ski) ? 'check' : 'add'}
+                      </span>
+                      {addedDeviceIds.includes(device.ski) && (
+                        <span className="material-symbols-outlined text-white text-xs absolute opacity-0 group-hover/btn:opacity-100 transition-opacity">
+                          close
+                        </span>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <p className="text-[9px] font-mono text-slate-500 truncate mb-2">
                   {device.ski}

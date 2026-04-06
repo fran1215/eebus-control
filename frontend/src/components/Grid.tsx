@@ -87,6 +87,7 @@ const getEdgePoint = (
 export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDevice, onDeviceDelete, simulationRunning = false, localSki = '' }: GridProps) {
   const [isScanning, setIsScanning] = useState(true);
   const [showCemPopover, setShowCemPopover] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
 
   // Use the localSki prop instead of fetching it
 
@@ -108,7 +109,13 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div className="lg:col-span-3">
         <div className="glass-panel rounded-3xl relative overflow-hidden grid-container border border-white/10 min-h-[450px]">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20" 
+            onClick={() => {
+              navigator.clipboard.writeText(localSki);
+              setShowCopied(true);
+              setTimeout(() => setShowCopied(false), 2000);
+            }}
+            >
             <div 
               className="size-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_50px_rgba(19,146,236,0.3)] relative cursor-pointer hover:scale-105 transition-transform group/cem"
               onMouseEnter={() => setShowCemPopover(true)}
@@ -148,6 +155,12 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
                       </p>
                     </div>
                   </div>
+                  {showCopied && (
+                    <div className="mt-1.5 flex items-center gap-1 text-green-400 text-[8px] font-bold">
+                      <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>check_circle</span>
+                      SKI copied to clipboard
+                    </div>
+                  )}
                   {/* Arrow pointing down */}
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-800/90 border-r border-b border-primary/30 rotate-45"></div>
                 </div>
