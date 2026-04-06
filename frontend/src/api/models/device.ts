@@ -37,4 +37,5 @@ export interface Device {
   shipInfo: SHIPInfo;
   ski: string;
   connectionState?: ConnectionStateValue;
+  simulated?: boolean;
 }
