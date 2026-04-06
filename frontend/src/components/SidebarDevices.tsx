@@ -2,6 +2,12 @@ import { useState, useEffect } from "preact/hooks";
 import { ConnectionState, type Device } from "../api/models/device";
 import { wsService } from "../services/websocket";
 
+interface SimulatedDeviceState {
+  running: boolean;
+  ski: string;
+  deviceName: string;
+}
+
 interface SidebarDevicesProps {
   onDeviceSelect?: (device: Device) => void;
   onAddDevice?: (device: Device) => void;
@@ -18,6 +24,11 @@ export default function SidebarDevices({
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedSki, setSelectedSki] = useState<string>("");
   const [newDeviceCount, setNewDeviceCount] = useState<number>(0);
+  const [showSimForm, setShowSimForm] = useState(false);
+  const [simDeviceName, setSimDeviceName] = useState("SimDevice");
+  const [simNominalMax, setSimNominalMax] = useState("10000");
+  const [simDevice, setSimDevice] = useState<SimulatedDeviceState | null>(null);
+  const [simCreating, setSimCreating] = useState(false);
 
   // Map device type to Material Symbols icon
   const getDeviceIcon = (type: string): string => {
@@ -53,6 +64,12 @@ export default function SidebarDevices({
         setNewDeviceCount(data.newCount);
         // Clear the notification after 3 seconds
         setTimeout(() => setNewDeviceCount(0), 3000);
+      } else if (type === 'simulated_device_started') {
+        setSimDevice({ running: true, ski: data.ski, deviceName: data.device_name });
+        setSimCreating(false);
+        setShowSimForm(false);
+      } else if (type === 'simulated_device_stopped') {
+        setSimDevice(null);
       }
     };
 
@@ -62,6 +79,20 @@ export default function SidebarDevices({
       wsService.removeHandler(handler);
     };
   }, []);
+
+  const handleCreateSimDevice = () => {
+    setSimCreating(true);
+    wsService.send('start_simulated_device', {
+      device_name: simDeviceName,
+      device_model: 'SimModel',
+      nominal_max: parseFloat(simNominalMax) || 10000,
+      port: 4712,
+    });
+  };
+
+  const handleStopSimDevice = () => {
+    wsService.send('stop_simulated_device', {});
+  };
 
   const handleClick = (device: Device) => {
     setSelectedSki(device.ski);
@@ -122,6 +153,11 @@ export default function SidebarDevices({
                     <h5 className="text-xs font-bold text-white">
                       {device.generalInfo.deviceName || device.shipInfo.instanceName || "Unnamed Device"}
                     </h5>
+                    {simDevice && device.ski === simDevice.ski && (
+                      <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[8px] font-bold rounded border border-purple-500/30">
+                        SIM
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     {device.connectionState !== ConnectionState.Completed && (
@@ -164,18 +200,106 @@ export default function SidebarDevices({
                 <p className="text-[9px] font-mono text-slate-500 truncate mb-2">
                   {device.ski}
                 </p>
-                {/* <div className="flex gap-1">
-                  {device.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-1.5 py-0.5 bg-white/5 rounded text-[8px] text-slate-400 font-bold"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div> */}
               </div>
             ))}
+          </div>
+
+          {/* Simulated Device Section */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            {!simDevice ? (
+              <>
+                {!showSimForm ? (
+                  <button
+                    onClick={() => setShowSimForm(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 rounded-xl text-xs font-bold transition-all border border-purple-500/20 hover:border-purple-500/40 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      add_circle
+                    </span>
+                    CREATE SIMULATED DEVICE
+                  </button>
+                ) : (
+                  <div className="glass-card p-4 rounded-xl border border-purple-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-white font-bold text-xs uppercase tracking-wider">
+                        New Simulated Device
+                      </h4>
+                      <button
+                        onClick={() => setShowSimForm(false)}
+                        className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wide">
+                        Device Name
+                      </label>
+                      <input
+                        type="text"
+                        value={simDeviceName}
+                        onInput={(e) => setSimDeviceName((e.target as HTMLInputElement).value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs font-mono focus:ring-1 focus:ring-purple-500 focus:border-purple-500 outline-none mt-1"
+                        placeholder="SimDevice"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wide">
+                        Nominal Max Power (W)
+                      </label>
+                      <input
+                        type="number"
+                        value={simNominalMax}
+                        onInput={(e) => setSimNominalMax((e.target as HTMLInputElement).value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs font-mono focus:ring-1 focus:ring-purple-500 focus:border-purple-500 outline-none mt-1"
+                        placeholder="10000"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreateSimDevice}
+                      disabled={simCreating}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {simCreating ? (
+                        <>
+                          <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                          CREATING...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-sm">play_arrow</span>
+                          START DEVICE
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="glass-card p-4 rounded-xl border border-purple-500/30">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-purple-400 animate-pulse"></span>
+                    <h4 className="text-white font-bold text-xs uppercase tracking-wider">
+                      {simDevice.deviceName}
+                    </h4>
+                    <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[8px] font-bold rounded">
+                      ACTIVE
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[9px] font-mono text-purple-400/60 truncate mb-3">
+                  {simDevice.ski}
+                </p>
+                <button
+                  onClick={handleStopSimDevice}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-xs font-bold transition-all border border-red-500/20 hover:border-red-500/40 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">stop</span>
+                  STOP DEVICE
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

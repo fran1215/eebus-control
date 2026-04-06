@@ -126,6 +126,10 @@ class WebSocketService {
       'set_log_level': ['log_level_changed', 'error'],
       'mdns_discovery': ['mdns_discovery', 'error'],
       'start_simulation': ['simulation_started', 'error'],
+      'start_simulated_device': ['simulated_device_started', 'error'],
+      'stop_simulated_device': ['simulated_device_stopped', 'error'],
+      'update_simulated_values': ['simulated_values_updated', 'error'],
+      'get_simulated_device_status': ['simulated_device_status', 'error'],
     };
 
     return responseMap[requestType] || ['error'];
