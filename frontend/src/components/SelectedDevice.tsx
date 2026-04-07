@@ -1,5 +1,5 @@
-import { useState } from 'preact/hooks';
-import { wsService } from '../services/websocket';
+import { useState } from "preact/hooks";
+import { wsService } from "../services/websocket";
 
 interface Device {
   id: string;
@@ -22,15 +22,53 @@ interface SelectedDeviceProps {
   simulationRunning?: boolean;
 }
 
-export default function SelectedDevice({ device, simulationRunning }: SelectedDeviceProps) {
-  const [activeTab, setActiveTab] = useState<'mpc' | 'lpc'>('mpc');
+export default function SelectedDevice({
+  device,
+  simulationRunning,
+}: SelectedDeviceProps) {
+  const [activeTab, setActiveTab] = useState<"mpc" | "lpc">("mpc");
   const [lpcActive, setLpcActive] = useState(false);
-  const [lpcValue, setLpcValue] = useState('');
-  const [lpcDuration, setLpcDuration] = useState('');
+  const [lpcValue, setLpcValue] = useState("");
+  const [lpcDuration, setLpcDuration] = useState("");
+  const [failsafeValue, setFailsafeValue] = useState("");
+  const [failsafeDuration, setFailsafeDuration] = useState("");
+  const [failsafeValueCheckbox, setFailsafeValueCheckbox] = useState(false);
+  const [failsafeDurationCheckbox, setFailsafeDurationCheckbox] =
+    useState(false);
+
+  const handleSendFailsafe = () => {
+    console.log("Send LPC failsafe value:", {
+      value: failsafeValue,
+      duration: failsafeDuration,
+    });
+
+    if(failsafeValueCheckbox) {
+      wsService.send("lpc_failsafe_value", {
+        ski: device.id,
+        value: failsafeValue ? parseFloat(failsafeValue) : 0,
+      });
+    }
+
+    if(failsafeDurationCheckbox) {
+      wsService.send("lpc_failsafe_duration", {
+        ski: device.id,
+        duration: failsafeDuration ? parseInt(failsafeDuration) : 0,
+      });
+    }
+  };
 
   const handleSendLimit = () => {
-    console.log('Send LPC limit:', { active: lpcActive, value: lpcValue, duration: lpcDuration });
-    wsService.send('lpc_limit', { ski: device.id, limit: parseFloat(lpcValue), active: lpcActive, duration: lpcDuration ? parseInt(lpcDuration) : 0 });
+    console.log("Send LPC limit:", {
+      active: lpcActive,
+      value: lpcValue,
+      duration: lpcDuration,
+    });
+    wsService.send("lpc_limit", {
+      ski: device.id,
+      limit: parseFloat(lpcValue),
+      active: lpcActive,
+      duration: lpcDuration ? parseInt(lpcDuration) : 0,
+    });
   };
 
   return (
@@ -39,7 +77,9 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
         <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
             <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
-              <span className={`material-symbols-outlined text-3xl ${device.iconColor}`}>
+              <span
+                className={`material-symbols-outlined text-3xl ${device.iconColor}`}
+              >
                 {device.icon}
               </span>
             </div>
@@ -59,17 +99,21 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
           </div>
           <div className="flex bg-white/5 p-1 rounded-lg">
             <button
-              onClick={() => setActiveTab('mpc')}
+              onClick={() => setActiveTab("mpc")}
               className={`px-6 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md ${
-                activeTab === 'mpc' ? 'tab-active' : 'text-slate-500 hover:text-white'
+                activeTab === "mpc"
+                  ? "tab-active"
+                  : "text-slate-500 hover:text-white"
               }`}
             >
               MPC Monitor
             </button>
             <button
-              onClick={() => setActiveTab('lpc')}
+              onClick={() => setActiveTab("lpc")}
               className={`px-6 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md ${
-                activeTab === 'lpc' ? 'tab-active' : 'text-slate-500 hover:text-white'
+                activeTab === "lpc"
+                  ? "tab-active"
+                  : "text-slate-500 hover:text-white"
               }`}
             >
               LPC Control
@@ -77,7 +121,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
           </div>
         </div>
 
-        {activeTab === 'mpc' && (
+        {activeTab === "mpc" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
             <div className="glass-card p-6 rounded-2xl border-t-2 border-t-primary/50">
               <p className="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">
@@ -85,7 +129,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.power : '0.00'}
+                  {simulationRunning ? device.power : "0.00"}
                 </span>
                 <span className="text-primary font-bold text-xs">kW</span>
               </div>
@@ -97,7 +141,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
                   <div className="mt-4 flex items-center gap-1.5">
                     <span className="size-1.5 rounded-full bg-green-500"></span>
                     <span className="text-[9px] text-slate-400 font-bold uppercase">
-                      {device.powerLimitContractual ? 'Contractual' : 'Nominal'}
+                      {device.powerLimitContractual ? "Contractual" : "Nominal"}
                     </span>
                   </div>
                 </div>
@@ -109,7 +153,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.energy : '0.00'}
+                  {simulationRunning ? device.energy : "0.00"}
                 </span>
                 <span className="text-blue-400 font-bold text-xs">kWh</span>
               </div>
@@ -120,7 +164,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.current : '0.00'}
+                  {simulationRunning ? device.current : "0.00"}
                 </span>
                 <span className="text-amber-400 font-bold text-xs">A</span>
               </div>
@@ -134,7 +178,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.voltage : '0.00'}
+                  {simulationRunning ? device.voltage : "0.00"}
                 </span>
                 <span className="text-purple-400 font-bold text-xs">V</span>
               </div>
@@ -145,7 +189,7 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.frequency : '0.00'}
+                  {simulationRunning ? device.frequency : "0.00"}
                 </span>
                 <span className="text-teal-400 font-bold text-xs">Hz</span>
               </div>
@@ -158,11 +202,11 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
           </div>
         )}
 
-        {activeTab === 'lpc' && (
+        {activeTab === "lpc" && (
           <div className="relative z-10">
             <div className="glass-card p-8 rounded-2xl border border-white/10 max-w-3xl">
               <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6">
-                LPC Control Panel
+                LPC - Limit Control Panel
               </h3>
               <div className="flex items-start gap-8">
                 {/* Toggle */}
@@ -174,21 +218,27 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
                     onClick={() => setLpcActive(!lpcActive)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                       lpcActive
-                        ? 'bg-green-500/10 border-green-500/30'
-                        : 'bg-white/5 border-white/10'
+                        ? "bg-green-500/10 border-green-500/30"
+                        : "bg-white/5 border-white/10"
                     }`}
                   >
-                    <div className={`w-10 h-5 rounded-full relative transition-colors ${
-                      lpcActive ? 'bg-green-500' : 'bg-slate-600'
-                    }`}>
-                      <div className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform ${
-                        lpcActive ? 'translate-x-5' : 'translate-x-0.5'
-                      }`} />
+                    <div
+                      className={`w-10 h-5 rounded-full relative transition-colors ${
+                        lpcActive ? "bg-green-500" : "bg-slate-600"
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform ${
+                          lpcActive ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
                     </div>
-                    <span className={`text-xs font-black uppercase tracking-widest ${
-                      lpcActive ? 'text-green-400' : 'text-slate-500'
-                    }`}>
-                      {lpcActive ? 'Active' : 'Inactive'}
+                    <span
+                      className={`text-xs font-black uppercase tracking-widest ${
+                        lpcActive ? "text-green-400" : "text-slate-500"
+                      }`}
+                    >
+                      {lpcActive ? "Active" : "Inactive"}
                     </span>
                   </button>
                 </div>
@@ -201,7 +251,9 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
                   <input
                     type="number"
                     value={lpcValue}
-                    onInput={(e) => setLpcValue((e.target as HTMLInputElement).value)}
+                    onInput={(e) =>
+                      setLpcValue((e.target as HTMLInputElement).value)
+                    }
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-mono focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
                     placeholder="0"
                   />
@@ -215,7 +267,9 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
                   <input
                     type="number"
                     value={lpcDuration}
-                    onInput={(e) => setLpcDuration((e.target as HTMLInputElement).value)}
+                    onInput={(e) =>
+                      setLpcDuration((e.target as HTMLInputElement).value)
+                    }
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-mono focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
                     placeholder="0"
                   />
@@ -229,14 +283,96 @@ export default function SelectedDevice({ device, simulationRunning }: SelectedDe
                   <button
                     onClick={handleSendLimit}
                     disabled={!simulationRunning}
-                    className="bg-primary hover:bg-blue-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary/20 disabled:shadow-none whitespace-nowrap"
+                    className="bg-primary hover:bg-purple-700 cursor-pointer disabled:bg-slate-700 disabled:cursor-not-allowed outline text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary/20 disabled:shadow-none whitespace-nowrap"
                   >
                     Send LPC Limit
                   </button>
                 </div>
               </div>
               <p className="text-[10px] text-slate-600 italic mt-4">
-                Sets the consumption power limit for this device via EEBUS LPC (Limitation of Power Consumption).
+                Sets the consumption power limit for this device via EEBUS LPC
+                (Limitation of Power Consumption).
+              </p>
+            </div>
+            <div className="glass-card p-8 rounded-2xl border border-white/10 max-w-3xl mt-5">
+              <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6">
+                LPC - Failsafe Control Panel
+              </h3>
+              <div className="flex items-start gap-8">
+                {/* Value */}
+                <div className="space-y-2 flex-1">
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                    Failsafe Value (W)
+                  </label>
+                  <input
+                    type="number"
+                    value={failsafeValue}
+                    onInput={(e) =>
+                      setFailsafeValue((e.target as HTMLInputElement).value)
+                    }
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-mono focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
+                    placeholder="0"
+                  />
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={failsafeValueCheckbox}
+                      onChange={(e) =>
+                        setFailsafeValueCheckbox(e.target.checked)
+                      }
+                      className="w-5 h-5 text-primary bg-white/5 border border-white/10 rounded focus:ring-primary"
+                    >
+                    </input>
+                    Send Failsafe Value
+                  </label>
+                </div>
+
+                {/* Duration */}
+                <div className="space-y-2 flex-1">
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                    Failsafe Duration (s)
+                  </label>
+                  <input
+                    type="number"
+                    value={failsafeDuration}
+                    onInput={(e) =>
+                      setFailsafeDuration((e.target as HTMLInputElement).value)
+                    }
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-mono focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
+                    placeholder="0"
+                  />
+
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={failsafeDurationCheckbox}
+                      onChange={(e) =>
+                        setFailsafeDurationCheckbox(e.target.checked)
+                      }
+                      className="w-5 h-5 text-primary bg-white/5 border border-white/10 rounded focus:ring-primary"
+                    >
+                    </input>
+                    Send Failsafe Duration
+                  </label>
+                </div>
+
+                {/* Send button */}
+                <div className="space-y-2">
+                  <label className="text-[10px] text-transparent font-black uppercase tracking-widest">
+                    Action
+                  </label>
+                  <button
+                    onClick={handleSendFailsafe}
+                    disabled={!simulationRunning}
+                    className="bg-primary hover:bg-purple-700 cursor-pointer disabled:bg-slate-700 disabled:cursor-not-allowed outline text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary/20 disabled:shadow-none whitespace-nowrap"
+                  >
+                    Send Failsafe Data
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-600 italic mt-4">
+                Sets the consumption power limit for this device via EEBUS LPC
+                (Limitation of Power Consumption).
               </p>
             </div>
           </div>
