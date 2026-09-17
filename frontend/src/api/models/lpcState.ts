@@ -5,9 +5,10 @@
 // still reachable. Kept in sync with LPCState in backend/server/eebus/lpcstate.go.
 
 export const LpcState = {
-  Init: "init",
+  // Init and "unlimited / autonomous" are reported as one state: the LPC use
+  // case gives the Energy Guard no way to tell them apart.
+  InitOrAutonomous: "init_or_autonomous",
   UnlimitedControlled: "unlimited_controlled",
-  UnlimitedAutonomous: "unlimited_autonomous",
   LimitedWithDuration: "limited_with_duration",
   LimitedWithoutDuration: "limited_without_duration",
   Failsafe: "failsafe",
@@ -36,22 +37,24 @@ interface LpcStateAppearance {
   text: string;
   background: string;
   border: string;
+  cardBorder: string; // left edge of the grid card
   description: string;
 }
 
 // Tailwind scans these files for class names, so every class is spelled out in
 // full here rather than assembled from parts at runtime.
 export const LPC_STATE_APPEARANCE: Record<LpcStateValue, LpcStateAppearance> = {
-  [LpcState.Init]: {
-    label: "Init",
-    shortLabel: "Init",
-    icon: "hourglass_empty",
+  [LpcState.InitOrAutonomous]: {
+    label: "Init / Autonomous",
+    shortLabel: "Init / Auto",
+    icon: "help",
     dot: "bg-slate-400",
     text: "text-slate-300",
     background: "bg-slate-400/10",
     border: "border-slate-400/30",
+    cardBorder: "border-l-slate-400",
     description:
-      "Not under CEM control yet — no limit has been sent to it, so it still applies its failsafe limit.",
+      "Not under CEM control — either still in init or acting on its own. The device reports nothing that tells the two apart.",
   },
   [LpcState.UnlimitedControlled]: {
     label: "Unlimited / controlled",
@@ -61,19 +64,9 @@ export const LPC_STATE_APPEARANCE: Record<LpcStateValue, LpcStateAppearance> = {
     text: "text-green-400",
     background: "bg-green-500/10",
     border: "border-green-500/30",
+    cardBorder: "border-l-green-500",
     description:
       "Reachable with no active limit — consuming freely under CEM control.",
-  },
-  [LpcState.UnlimitedAutonomous]: {
-    label: "Unlimited / autonomous",
-    shortLabel: "Autonomous",
-    icon: "link_off",
-    dot: "bg-sky-400",
-    text: "text-sky-300",
-    background: "bg-sky-400/10",
-    border: "border-sky-400/30",
-    description:
-      "Out of contact past the failsafe period — the device now decides on its own.",
   },
   [LpcState.LimitedWithDuration]: {
     label: "Limited with duration",
@@ -83,6 +76,7 @@ export const LPC_STATE_APPEARANCE: Record<LpcStateValue, LpcStateAppearance> = {
     text: "text-amber-300",
     background: "bg-amber-400/10",
     border: "border-amber-400/30",
+    cardBorder: "border-l-amber-400",
     description:
       "Consumption limit active — it lifts by itself when its duration runs out.",
   },
@@ -94,6 +88,7 @@ export const LPC_STATE_APPEARANCE: Record<LpcStateValue, LpcStateAppearance> = {
     text: "text-orange-400",
     background: "bg-orange-500/10",
     border: "border-orange-500/30",
+    cardBorder: "border-l-orange-500",
     description: "Consumption limit active until the CEM changes it.",
   },
   [LpcState.Failsafe]: {
@@ -104,16 +99,15 @@ export const LPC_STATE_APPEARANCE: Record<LpcStateValue, LpcStateAppearance> = {
     text: "text-red-400",
     background: "bg-red-500/10",
     border: "border-red-500/30",
+    cardBorder: "border-l-red-500",
     description:
       "Contact lost — the device fell back to its failsafe limit.",
   },
 };
 
-// A device the backend has not reported on yet is shown as Init, matching the
-// state a Controllable System starts in. Note that the EEBUS LPC use case gives
-// the Energy Guard no way to read the CS state machine, so the backend infers
-// Init from whether this CEM has handed the device a limit yet.
-export const DEFAULT_LPC_STATE: LpcStateValue = LpcState.Init;
+// A device the backend has not reported on yet reads as the indeterminate
+// state, which is also where a device sits until this CEM limits it.
+export const DEFAULT_LPC_STATE: LpcStateValue = LpcState.InitOrAutonomous;
 
 export function lpcStateAppearance(state?: LpcStateValue): LpcStateAppearance {
   return LPC_STATE_APPEARANCE[state ?? DEFAULT_LPC_STATE];

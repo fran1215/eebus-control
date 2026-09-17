@@ -9,23 +9,17 @@ interface GridDevice {
   id: string;
   name: string;
   icon: string;
-  power?: string;
-  flow?: string;
-  borderColor: string;
+  power?: number; // W
+  energy?: number; // Wh
+  current?: number; // A
+  voltage?: number; // V
+  frequency?: number; // Hz
+  consumptionNominalMax?: number; // W
   iconColor: string;
   position: { x: number; y: number }; // Changed to coordinate object
   backendDevice?: BackendDevice; // Store the original backend device
   lpcStatus?: LpcStatus; // EEBUS LPC state reported by the backend
 }
-
-const BORDER_COLORS = [
-  'border-l-green-500',
-  'border-l-blue-400',
-  'border-l-purple-500',
-  'border-l-orange-500',
-  'border-l-pink-500',
-  'border-l-yellow-500',
-];
 
 const ICON_COLORS = [
   'text-green-500',
@@ -58,34 +52,22 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
   useEffect(() => {
     const unsubscribe = wsService.onMessage('mpc_update', (data: any) => {
       const { ski, power, energy, current, voltage, frequency } = data;
-      
+
+      // Kept in the backend's units and formatted at the readouts, so a
+      // reading that never arrives can fall back to zero there.
+      const readings = { power, energy, current, voltage, frequency };
+
       // Update the device with matching SKI
-      setDevices(prevDevices => 
-        prevDevices.map(device => 
-          device.id === ski 
-            ? { 
-                ...device, 
-                power: `${(power / 1000).toFixed(2)} kW`,
-                energy: `${(energy / 1000).toFixed(2)} kWh`,
-                current: `${current.toFixed(2)} A`,
-                voltage: `${voltage.toFixed(2)} V`,
-                frequency: `${frequency.toFixed(2)} Hz`
-              }
-            : device
+      setDevices(prevDevices =>
+        prevDevices.map(device =>
+          device.id === ski ? { ...device, ...readings } : device
         )
       );
 
       // Update selected device if it matches
-      setSelectedDevice(prevSelected => 
+      setSelectedDevice(prevSelected =>
         prevSelected && prevSelected.id === ski
-          ? {
-              ...prevSelected,
-              power: `${(power / 1000).toFixed(2)} kW`,
-              energy: `${(energy / 1000).toFixed(2)} kWh`,
-              current: `${current.toFixed(2)} A`,
-              voltage: `${voltage.toFixed(2)} V`, 
-              frequency: `${data.frequency.toFixed(2)} Hz`
-            }
+          ? { ...prevSelected, ...readings }
           : prevSelected
       );
       
@@ -106,7 +88,7 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
           device.id === ski 
             ? { 
                 ...device, 
-                consumptionNominalMax: `${(consumption_nominal_max / 1000).toFixed(2)} kW`
+                consumptionNominalMax: consumption_nominal_max
               }
             : device
         )
@@ -117,7 +99,7 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
         prevSelected && prevSelected.id === ski
           ? {
               ...prevSelected,
-              consumptionNominalMax: `${(consumption_nominal_max / 1000).toFixed(2)} kW`
+              consumptionNominalMax: consumption_nominal_max
             }
           : prevSelected
       );
@@ -260,13 +242,16 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
       return typeMap[normalizedType] || 'device_hub'; // default icon
     };
 
-    const colorIndex = devices.length % BORDER_COLORS.length;
+    const colorIndex = devices.length % ICON_COLORS.length;
     const newDevice: GridDevice = {
       id: backendDevice.ski,
       name: backendDevice.generalInfo.deviceName || backendDevice.shipInfo.instanceName || 'Unnamed Device',
       icon: deviceTypeToIcon(backendDevice.generalInfo.type),
-      power: '0.0 kW',
-      borderColor: BORDER_COLORS[colorIndex],
+      power: 0,
+      energy: 0,
+      current: 0,
+      voltage: 0,
+      frequency: 0,
       iconColor: ICON_COLORS[colorIndex],
       position: generateRandomPosition(),
       backendDevice: backendDevice, // Store the original device

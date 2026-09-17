@@ -3,15 +3,14 @@ import SidebarDevices from './SidebarDevices';
 import LpcStatusBadge from './LpcStatusBadge';
 import type { Device as BackendDevice, Device } from '../api/models/device';
 import { formatLimit, isLimitedState, lpcStateAppearance, type LpcStatus } from '../api/models/lpcState';
+import { formatPower } from '../api/models/measurements';
 import { wsService } from '../services/websocket';
 
 interface GridDevice {
   id: string;
   name: string;
   icon: string;
-  power?: string;
-  flow?: string;
-  borderColor: string;
+  power?: number; // W
   iconColor: string;
   position: { x: number; y: number };
   selected?: boolean;
@@ -223,7 +222,7 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
             >
               <button
                 onClick={() => handleDeviceClick(device)}
-                className={`glass-card p-4 rounded-xl w-48 border-l-4 ${device.borderColor} hover:ring-2 hover:ring-primary text-left transition-all ${
+                className={`glass-card p-4 rounded-xl w-48 border-l-4 ${lpcStateAppearance(device.lpcStatus?.state).cardBorder} hover:ring-2 hover:ring-primary text-left transition-all ${
                   selectedDevice?.id === device.id ? 'ring-2 ring-primary' : ''
                 }`}
               >
@@ -241,10 +240,10 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[10px]">
                     <span className="text-slate-400 uppercase font-bold">
-                      {device.power ? 'Power' : 'Flow'}
+                      Power
                     </span>
                     <span className="text-white font-mono">
-                      {simulationRunning ? (device.power || device.flow) : '0.00'}
+                      {formatPower(simulationRunning ? device.power : 0)} kW
                     </span>
                   </div>
                   {isLimitedState(device.lpcStatus?.state) && (

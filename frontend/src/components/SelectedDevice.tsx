@@ -1,20 +1,26 @@
 import { useState } from "preact/hooks";
 import LpcStatusBadge from "./LpcStatusBadge";
 import type { LpcStatus } from "../api/models/lpcState";
+import {
+  formatCurrent,
+  formatEnergy,
+  formatFrequency,
+  formatPower,
+  formatVoltage,
+} from "../api/models/measurements";
 import { wsService } from "../services/websocket";
 
 interface Device {
   id: string;
   name: string;
   icon: string;
-  power?: string;
-  borderColor: string;
+  power?: number; // W
   iconColor: string;
   position: string;
-  energy?: string;
-  current?: string;
-  voltage?: string;
-  frequency?: string;
+  energy?: number; // Wh
+  current?: number; // A
+  voltage?: number; // V
+  frequency?: number; // Hz
   powerLimit?: string;
   powerLimitContractual?: boolean;
   lpcStatus?: LpcStatus;
@@ -133,7 +139,7 @@ export default function SelectedDevice({
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.power : "0.00"}
+                  {formatPower(simulationRunning ? device.power : 0)}
                 </span>
                 <span className="text-primary font-bold text-xs">kW</span>
               </div>
@@ -157,7 +163,7 @@ export default function SelectedDevice({
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.energy : "0.00"}
+                  {formatEnergy(simulationRunning ? device.energy : 0)}
                 </span>
                 <span className="text-blue-400 font-bold text-xs">kWh</span>
               </div>
@@ -168,7 +174,7 @@ export default function SelectedDevice({
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.current : "0.00"}
+                  {formatCurrent(simulationRunning ? device.current : 0)}
                 </span>
                 <span className="text-amber-400 font-bold text-xs">A</span>
               </div>
@@ -182,7 +188,7 @@ export default function SelectedDevice({
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.voltage : "0.00"}
+                  {formatVoltage(simulationRunning ? device.voltage : 0)}
                 </span>
                 <span className="text-purple-400 font-bold text-xs">V</span>
               </div>
@@ -193,7 +199,7 @@ export default function SelectedDevice({
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl digital-readout font-bold text-white">
-                  {simulationRunning ? device.frequency : "0.00"}
+                  {formatFrequency(simulationRunning ? device.frequency : 0)}
                 </span>
                 <span className="text-teal-400 font-bold text-xs">Hz</span>
               </div>
