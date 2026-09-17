@@ -122,6 +122,7 @@ class WebSocketService {
       'register_skis': ['skis_registered', 'error'],
       'get_lpp': ['lpp', 'error'],
       'get_lpc': ['lpc', 'error'],
+      'get_lpc_states': ['lpc_states', 'error'],
       'get_log_level': ['log_level', 'error'],
       'set_log_level': ['log_level_changed', 'error'],
       'mdns_discovery': ['mdns_discovery', 'error'],

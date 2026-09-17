@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import SidebarDevices from './SidebarDevices';
+import LpcStatusBadge from './LpcStatusBadge';
 import type { Device as BackendDevice, Device } from '../api/models/device';
+import { formatLimit, isLimitedState, lpcStateAppearance, type LpcStatus } from '../api/models/lpcState';
 import { wsService } from '../services/websocket';
 
 interface GridDevice {
@@ -13,6 +15,7 @@ interface GridDevice {
   iconColor: string;
   position: { x: number; y: number };
   selected?: boolean;
+  lpcStatus?: LpcStatus;
 }
 
 interface GridProps {
@@ -224,13 +227,16 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
                   selectedDevice?.id === device.id ? 'ring-2 ring-primary' : ''
                 }`}
               >
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-2">
                   <span className={`material-symbols-outlined ${device.iconColor}`}>
                     {device.icon}
                   </span>
                   <h4 className="text-white font-bold text-xs truncate">
                     {device.name}
                   </h4>
+                </div>
+                <div className="mb-3">
+                  <LpcStatusBadge status={device.lpcStatus} size="card" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[10px]">
@@ -241,6 +247,16 @@ export default function Grid({ devices, selectedDevice, onDeviceSelect, onAddDev
                       {simulationRunning ? (device.power || device.flow) : '0.00'}
                     </span>
                   </div>
+                  {isLimitedState(device.lpcStatus?.state) && (
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="text-slate-400 uppercase font-bold">
+                        Limit
+                      </span>
+                      <span className={`font-mono ${lpcStateAppearance(device.lpcStatus?.state).text}`}>
+                        {formatLimit(device.lpcStatus!.limit)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </button>
             </div>

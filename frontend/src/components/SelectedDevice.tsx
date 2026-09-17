@@ -1,4 +1,6 @@
 import { useState } from "preact/hooks";
+import LpcStatusBadge from "./LpcStatusBadge";
+import type { LpcStatus } from "../api/models/lpcState";
 import { wsService } from "../services/websocket";
 
 interface Device {
@@ -15,6 +17,7 @@ interface Device {
   frequency?: string;
   powerLimit?: string;
   powerLimitContractual?: boolean;
+  lpcStatus?: LpcStatus;
 }
 
 interface SelectedDeviceProps {
@@ -91,6 +94,7 @@ export default function SelectedDevice({
                 <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold rounded border border-primary/30 uppercase">
                   Selected
                 </span>
+                <LpcStatusBadge status={device.lpcStatus} size="header" />
               </div>
               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
                 Device ID: {device.id.toUpperCase()}

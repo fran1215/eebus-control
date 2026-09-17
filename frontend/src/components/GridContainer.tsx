@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import Grid from './Grid.tsx';
 import SelectedDevice from './SelectedDevice.tsx';
 import type { Device as BackendDevice } from '../api/models/device';
+import type { LpcStatus } from '../api/models/lpcState';
 import { wsService } from '../services/websocket';
 
 interface GridDevice {
@@ -14,6 +15,7 @@ interface GridDevice {
   iconColor: string;
   position: { x: number; y: number }; // Changed to coordinate object
   backendDevice?: BackendDevice; // Store the original backend device
+  lpcStatus?: LpcStatus; // EEBUS LPC state reported by the backend
 }
 
 const BORDER_COLORS = [
@@ -126,6 +128,51 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
     return unsubscribe;
   }, []);
 
+  // Listen for LPC state updates from WebSocket
+  useEffect(() => {
+    const applyStatuses = (statuses: LpcStatus[]) => {
+      const bySki = new Map(statuses.map(status => [status.ski, status]));
+
+      setDevices(prevDevices =>
+        prevDevices.map(device =>
+          bySki.has(device.id)
+            ? { ...device, lpcStatus: bySki.get(device.id) }
+            : device
+        )
+      );
+
+      setSelectedDevice(prevSelected =>
+        prevSelected && bySki.has(prevSelected.id)
+          ? { ...prevSelected, lpcStatus: bySki.get(prevSelected.id) }
+          : prevSelected
+      );
+    };
+
+    const unsubscribeUpdate = wsService.onMessage('lpc_state_update', (data: LpcStatus) => {
+      applyStatuses([data]);
+      console.log(`LPC State: ${data.ski} - ${data.state}`);
+    });
+
+    // Snapshot of every device, so a reload or reconnect starts in sync
+    const unsubscribeSnapshot = wsService.onMessage('lpc_states', (data: { states: LpcStatus[] }) => {
+      applyStatuses(data.states || []);
+    });
+
+    const unsubscribeConnected = wsService.onMessage('connected', () => {
+      wsService.send('get_lpc_states');
+    });
+
+    if (wsService.isConnected()) {
+      wsService.send('get_lpc_states');
+    }
+
+    return () => {
+      unsubscribeUpdate();
+      unsubscribeSnapshot();
+      unsubscribeConnected();
+    };
+  }, []);
+
   const generateRandomPosition = (): { x: number; y: number } => {
     const positions = [
       { x: 15, y: 10 },
@@ -229,6 +276,9 @@ export default function GridContainer({ simulationRunning = false, localSki = ''
     console.log('Device added to grid:', newDevice);
 
     wsService.send('add_device', { ski: backendDevice.ski});
+    // The backend may already know this device's LPC state, so ask rather than
+    // leaving the card on Init until its next transition.
+    wsService.send('get_lpc_states');
   };
 
   return (
